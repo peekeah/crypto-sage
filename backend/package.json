@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
-    "start": "tsc -b && node dist",
+    "dev": "nodemon -r dotenv/config src/index.ts",
+    "start": "npm run build && node -r dotenv/config dist",
     "build": "tsc -b"
   },
   "keywords": [],
@@ -17,6 +17,13 @@
     "ts-node": "^10.9.2"
   },
   "dependencies": {
+    "@jup-ag/api": "^6.0.32",
+    "@project-serum/serum": "^0.13.65",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "axios": "^1.7.9",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2"
   }
 }
