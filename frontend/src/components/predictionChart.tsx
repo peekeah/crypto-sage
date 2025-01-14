@@ -26,15 +26,25 @@ interface FetchPredictionsResponse {
   backtestData: BacktestData;
 }
 
+interface PriceData {
+  openTime: number;  // Timestamp for when the market opened
+  open: string;      // The opening price as a string (e.g., "95812.63000000")
+  high: string;      // The highest price during the period as a string (e.g., "95963.86000000")
+  low: string;       // The lowest price during the period as a string (e.g., "95625.00000000")
+  close: string;     // The closing price as a string (e.g., "95821.92000000")
+  volume: string;    // The total volume of the asset traded during the period as a string (e.g., "326.30061000")
+  closeTime: number; // Timestamp for when the market closed
+}
+
 const fetchPredictions = async (): Promise<FetchPredictionsResponse> => {
-  const URI = "http://localhost:5000";
+  const URI = process.env.NEXT_PUBLIC_API_URI;
   try {
     // Fetch historical data (actual prices)
     const dataResponse = await axios.get(`${URI}/api/predictor/data/BTCUSDT`);
-    const historicalData = dataResponse.data;
+    const historicalData = dataResponse.data as PriceData[];
 
     // Prepare historical data
-    const actualPrices = historicalData.map((item: any) => ({
+    const actualPrices = historicalData.map((item) => ({
       time: new Date(item.openTime).toLocaleTimeString(),
       actualPrice: parseFloat(item.close), // Close price is used here
     }));
