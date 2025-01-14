@@ -1,14 +1,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ArbitrageCalculator from "./components/arbitrageCalculator";
-import TradingChart from "./components/rechartChart";
-import MarketPredictor from "./components/predictionChart";
+import ArbitrageCalculator from "../components/arbitrageCalculator";
+import MarketPredictor from "../components/predictionChart";
 
 export default function Home() {
   return (
     <div className="bg-slate-50 h-screen">
       <Tabs
         className="w-full px-10 py-7 space-y-5"
-        defaultValue="predictor"
+        defaultValue="scanner"
       >
         <TabsList className="grid grid-cols-2 max-w-[400px]">
           <TabsTrigger value="scanner">Scanner</TabsTrigger>
@@ -18,9 +17,7 @@ export default function Home() {
           <ArbitrageCalculator />
         </TabsContent>
         <TabsContent value="predictor">
-          {/* <MarketPredictor /> */}
           <MarketPredictor />
-          {/* <TradingChart /> */}
         </TabsContent>
       </Tabs>
     </div>

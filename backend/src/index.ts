@@ -1,11 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
-import { getEnv } from "./utils";
 import predictorRouter from "./routes/predictor";
 import scannerRouter from "./routes/scanner";
+import { CONFIG } from "./config";
 
-const port = getEnv("API_PORT", 5000);
+const port = CONFIG.SERVER.API_PORT;
 
 const app = express();
 app.use(express.json());

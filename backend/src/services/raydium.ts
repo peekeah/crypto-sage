@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { CONFIG } from '../config';
 
 class Raydium {
 
-  private RAYDIUM_API_URL = 'https://api-v3.raydium.io';
+  private RAYDIUM_API_URL = CONFIG.RAYDIUM.API_URI;
 
   /**
    * Fetches USDC trading pair prices for tokens on Solana using the Raydium API.

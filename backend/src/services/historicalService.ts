@@ -1,5 +1,4 @@
 import { Interval, Spot } from '@binance/connector-typescript';
-import { CONFIG } from '../config/index';
 import { ProcessedKlineData } from '../types/binance';
 import { calculateRSI, calculateMACD, calculateBollingerBands } from '../utils/indicators';
 
@@ -7,10 +6,7 @@ export class HistoricalDataService {
   private client: Spot;
 
   constructor() {
-    this.client = new Spot(
-      CONFIG.BINANCE.API_KEY,
-      CONFIG.BINANCE.API_SECRET
-    );
+    this.client = new Spot();
   }
 
   async fetchCompleteHistoricalData(
