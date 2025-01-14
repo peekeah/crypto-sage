@@ -51,7 +51,7 @@ const ArbitrageCalculator = () => {
   const opportunities = data?.data?.opportunities as ArbitrageOpportunity[];
 
   return (
-    <div className="p-10 h-screen bg-slate-50">
+    <div className="h-screen bg-slate-50">
       {/* Header */}
       <div>
         <div className="text-xl">Arbitrage Dashboard</div>
