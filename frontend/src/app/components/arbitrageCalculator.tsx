@@ -8,29 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { RefreshCw } from "lucide-react";
 
-interface Token {
-  symbol: string;
-  jupiterAddress: string;
-  jupiterDecimals: number;
-  binanceSymbol: string;
-  logoURI: string;
-}
-
-interface Fees {
-  jupiter: number;
-  binance: number;
-  total: number;
-}
-
 interface ArbitrageOpportunity {
-  token: Token;
-  jupiterPrice: number;
-  binancePrice: number;
+  symbol: string;
+  exchangeA: string;
+  exchangeB: string;
+  priceA: string;
+  priceB: string;
   profitPercentage: number;
-  direction: string;  // Can be "Jupiter→Binance" or "Binance→Jupiter"
-  estimatedProfitUSD: number;
-  timestamp: string;
-  fees: Fees;
 }
 
 const fetchArbitrageOpportunities = async () => {
@@ -90,53 +74,30 @@ const ArbitrageCalculator = () => {
                     </div>
                   )
                     : (
-                      opportunities?.map((item, index) => {
-                        const token = item.token.symbol;
-                        const profit = item.profitPercentage;
-
-                        let exchangeA, exchangeB, exchangeAPrice, exchangeBPrice;
-
-                        if (item.direction === "Jupiter→Binance") {
-                          exchangeA = "Jupiter";
-                          exchangeB = "Binance";
-                          exchangeAPrice = item.jupiterPrice;
-                          exchangeBPrice = item.binancePrice;
-                        } else {
-                          exchangeA = "Binance";
-                          exchangeB = "Jupiter";
-                          exchangeAPrice = item.binancePrice;
-                          exchangeBPrice = item.jupiterPrice;
-                        }
-
-                        console.log({
-                          token, exchangeA, exchangeAPrice, exchangeB, exchangeBPrice, profit
-                        })
-
-                        return (
-                          <Card key={token + index}
-                            className="px-3 py-2 !m-0"
-                          >
-                            <CardContent className="!p-5 m-0">
-                              <CardTitle className="pb-2">{token + "/USDC"}</CardTitle>
-                              <div className="flex w-full justify-between">
-                                <div className="flex gap-3">
-                                  <div>
-                                    <CardDescription>{exchangeA}</CardDescription>
-                                    <div>{exchangeAPrice}</div>
-                                  </div>
-                                  <div>
-                                    <CardDescription>{exchangeB}</CardDescription>
-                                    <div>{exchangeBPrice}</div>
-                                  </div>
+                      opportunities?.map((token, index) => (
+                        <Card key={token.symbol + index}
+                          className="px-3 py-2 !m-0"
+                        >
+                          <CardContent className="!p-5 m-0">
+                            <CardTitle className="pb-2">{token.symbol + "/USDC"}</CardTitle>
+                            <div className="flex w-full justify-between">
+                              <div className="flex gap-3">
+                                <div>
+                                  <CardDescription>{token.exchangeA}</CardDescription>
+                                  <div>{token.priceA}</div>
                                 </div>
-                                <div className="font-semibold text-green-700">
-                                  {profit} Profit
+                                <div>
+                                  <CardDescription>{token.exchangeB}</CardDescription>
+                                  <div>{token.priceB}</div>
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        )
-                      })
+                              <div className="font-semibold text-green-700">
+                                {token.profitPercentage}% Profit
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
                     )
                 )
             }

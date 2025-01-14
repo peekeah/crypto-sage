@@ -1,20 +1,33 @@
 import { Router } from "express";
-import { ArbitrageAnalyzer } from "../services/arbitrageAnalyzer";
+import ArbitrageAnalyzer from "../services/arbitrage";
 import { HistoricalDataService } from "../services/historicalService";
 import { Interval } from "@binance/connector-typescript";
+import { Binance } from "../services/binance";
+import Raydium from "../services/raydium";
 
 const router = Router();
-const analyzer = new ArbitrageAnalyzer();
 const historicalService = new HistoricalDataService();
+
+const binance = new Binance();
+const rhydium = new Raydium();
+const analyzer = new ArbitrageAnalyzer();
 
 router.get("/arbitrage-opportunities", async (req, res) => {
   try {
-    const response = await analyzer.analyzeAllOpportunities(100);
+    // const response = await analyzer.analyzeAllOpportunities(100);
+
+    const [binancePrices, solanaPrices] = await Promise.all([
+      binance.fetchBinancePrices(), rhydium.fetchRhydiumPrices()
+    ])
+
+    const opportunities = analyzer.findArbitrage(binancePrices, solanaPrices)
+
     res.send({
       status: true,
       data: {
-        count: response?.length,
-        opportunities: response
+        count: opportunities.length,
+        // opportunities: response,
+        opportunities
       }
     });
   } catch (err: any) {

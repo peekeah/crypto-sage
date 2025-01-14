@@ -34,5 +34,22 @@ export class Binance {
       throw error;
     }
   };
+
+
+  async fetchBinancePrices(): Promise<{ [symbol: string]: number }> {
+    const exchangeInfo = await client.exchangeInformation();
+    const usdcPairs = exchangeInfo.symbols.filter((s: any) => s.quoteAsset === 'USDC');
+
+    const prices: { [symbol: string]: number } = {};
+    for (const pair of usdcPairs) {
+      const ticker = await client.symbolPriceTicker({ symbol: pair.symbol });
+      if (!Array.isArray(ticker)) {
+        prices[pair.baseAsset] = parseFloat(ticker.price);
+      } else {
+        prices[pair.baseAsset] = parseFloat(ticker?.[0].price || "0");
+      }
+    }
+    return prices;
+  }
 }
 
