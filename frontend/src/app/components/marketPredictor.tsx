@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 import { chartMockData } from "@/mock";
 import { Card, CardContent } from "@/components/ui/card";
+import { timeStamp } from "console";
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,9 +27,51 @@ ChartJS.register(
   Legend
 )
 
-const MarketPredictor = () => {
-  const [marketData, setMarketData] = useState(chartMockData);
+export type MarketData = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  indicators: {
+    rsi: number;
+    macd: {
+      macd: number;
+      signal: number;
+      histogram: number;
+    };
+    bollinger: {
+      upper: number;
+      middle: number;
+      lower: number;
+    };
+  };
+};
 
+interface Prediction {
+  timestamp: number;
+  currentPrice: number,
+  prediction: {
+    confidence: number;       // Confidence level of the prediction
+    predictedPrice: number;   // Predicted price value
+  };
+};
+
+export type Message = {
+  type: "marketData" | "timeRange";
+  data: MarketData;
+  timestamp: number;
+} | {
+  type: "prediction";
+  data: Prediction;
+  timeStamp: number;
+};
+
+const MarketPredictor = () => {
+  const [marketData, setMarketData] = useState<MarketData[]>([]);
+
+  /*
   // Simulate real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -50,11 +93,53 @@ const MarketPredictor = () => {
     }, 2000); // Updates every 2 seconds
     return () => clearInterval(interval);
   }, [marketData]);
+  */
+
+  useEffect(() => {
+    let socket: WebSocket;
+    try {
+      const URI = process.env.NEXT_APP_WS_URI || "ws://localhost:5000"
+      socket = new WebSocket(URI)
+
+      socket.onopen = () => {
+        console.log("Websocket is connected")
+      }
+      socket.onmessage = (res) => {
+        const message = JSON.parse(res?.data) as Message;
+        if (message.type === "marketData") {
+          const newMarketData = message.data;
+
+          // Update marketData state with new data
+          setMarketData((prevData) => {
+            const lastTimestamp = prevData[prevData.length - 1]?.timestamp || 0;
+
+            // Append only if the new data is more recent
+            // if (newMarketData.timestamp > lastTimestamp) {
+            return [...prevData, newMarketData];
+            // }
+            return prevData;
+          });
+        } else if (message.type === "prediction") {
+          console.log("prediction:", message)
+        } else {
+          console.log("timeRange:", message)
+        }
+      }
+    } catch (err) {
+      console.log("Error while fetching", err)
+    }
+    return () => {
+      socket?.close()
+    }
+  }, [])
+
+  console.log("data", marketData)
 
   // Prepare data for the chart
   const labels = marketData.map((data) =>
     new Date(data.timestamp).toLocaleTimeString()
   );
+
   const openPrices = marketData.map((data) => data.open);
   const closePrices = marketData.map((data) => data.close);
   const highPrices = marketData.map((data) => data.high);

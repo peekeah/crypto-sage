@@ -35,7 +35,7 @@ interface ArbitrageOpportunity {
 
 const fetchArbitrageOpportunities = async () => {
   const API_URI = process.env.API_URI || "http://localhost:5000";
-  const response = await axios.get(`${API_URI}/`);
+  const response = await axios.get(`${API_URI}/api/scanner/arbitrage-opportunities`);
   return response.data;
 };
 
@@ -45,8 +45,6 @@ const ArbitrageCalculator = () => {
     queryKey: ["arbitrageOpportunities"],
     queryFn: fetchArbitrageOpportunities,
   });
-
-  console.log("dd", isLoading, data)
 
   const opportunities = data?.data?.opportunities as ArbitrageOpportunity[];
 
