@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { tokens } from "@/constant";
 
 // Data interface for storing prices and predictions
 interface ChartData {
@@ -36,10 +38,10 @@ interface PriceData {
   closeTime: number; // Timestamp for when the market closed
 }
 
-const fetchPredictions = async (): Promise<FetchPredictionsResponse> => {
+const fetchPredictions = async (token: string): Promise<FetchPredictionsResponse> => {
   const BASE_URL = process.env.NEXT_PUBLIC_API_URI;
   const predictPayload = {
-    symbol: "BTCUSDT",
+    symbol: token,
     interval: "1h",
     limit: 500,
     lookback: 10,
@@ -110,10 +112,25 @@ const fetchPredictions = async (): Promise<FetchPredictionsResponse> => {
 
 const MarketPredictor = () => {
 
-  const { data, error, isLoading } = useQuery<FetchPredictionsResponse>({
-    queryKey: ["marketPredictor"],
-    queryFn: fetchPredictions,
-  });
+  const firstRender = useRef(true);
+  const [selectedToken, setSelectedToken] = useState(tokens[0]?.value);
+
+  const {
+    data,
+    error,
+    isPending: isLoading,
+    mutate
+  } = useMutation({
+    mutationFn: () => fetchPredictions(selectedToken)
+  })
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+    } else {
+      mutate();
+    }
+  }, [selectedToken])
 
   const chartData = data?.chartData || [];
   const backtestData = data?.backtestData || { accuracy: 0, profitLoss: 0 }
@@ -127,11 +144,35 @@ const MarketPredictor = () => {
 
       <Card className="p-5 py-8 my-5">
         <CardContent className="space-y-8 h-[600px]">
-          <div>
-            <div className="text-xl">Test result</div>
-            <div className="flex gap-5">
-              <div>Accuracy: {backtestData.accuracy?.toFixed(2)}%</div>
-              <div>Profit/Loss: {backtestData.profitLoss.toFixed(2)}</div>
+          <div className="flex justify-between w-full">
+            <div>
+              <div className="text-xl">Test result</div>
+              <div className="flex gap-5">
+                <div>Accuracy: {backtestData.accuracy?.toFixed(2)}%</div>
+                <div>Profit/Loss: {backtestData.profitLoss.toFixed(2)}</div>
+              </div>
+            </div>
+            <div>
+              <Select
+                value={selectedToken}
+                onValueChange={(value) => {
+                  setSelectedToken(value);
+                }}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder={selectedToken} />
+                </SelectTrigger>
+                <SelectContent>
+                  {
+                    tokens.map(token => (
+                      <SelectItem
+                        key={token.value}
+                        value={token.value}
+                      >{token.label}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {
@@ -175,7 +216,7 @@ const MarketPredictor = () => {
           }
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 };
 
