@@ -14,7 +14,6 @@ const analyzer = new ArbitrageAnalyzer();
 
 router.get("/arbitrage-opportunities", async (req, res) => {
   try {
-    // const response = await analyzer.analyzeAllOpportunities(100);
 
     const [binancePrices, solanaPrices] = await Promise.all([
       binance.fetchBinancePrices(), rhydium.fetchRhydiumPrices()
@@ -26,7 +25,6 @@ router.get("/arbitrage-opportunities", async (req, res) => {
       status: true,
       data: {
         count: opportunities.length,
-        // opportunities: response,
         opportunities
       }
     });

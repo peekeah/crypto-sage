@@ -1,7 +1,5 @@
 import { Interval, Spot } from "@binance/connector-typescript";
 
-const client = new Spot();
-
 export interface BinanceKline {
   openTime: number;
   open: string;
@@ -11,6 +9,8 @@ export interface BinanceKline {
   volume: string;
   closeTime: number;
 }
+
+const client = new Spot();
 
 export class Binance {
   async fetchHistoricalData(
@@ -37,18 +37,29 @@ export class Binance {
 
 
   async fetchBinancePrices(): Promise<{ [symbol: string]: number }> {
-    const exchangeInfo = await client.exchangeInformation();
-    const usdcPairs = exchangeInfo.symbols.filter((s: any) => s.quoteAsset === 'USDC');
 
+    const exchangeInfo = await client.exchangeInformation();
     const prices: { [symbol: string]: number } = {};
-    for (const pair of usdcPairs) {
-      const ticker = await client.symbolPriceTicker({ symbol: pair.symbol });
-      if (!Array.isArray(ticker)) {
-        prices[pair.baseAsset] = parseFloat(ticker.price);
-      } else {
-        prices[pair.baseAsset] = parseFloat(ticker?.[0].price || "0");
-      }
-    }
+
+    const priceRequests = exchangeInfo.symbols
+      .flatMap(async (token) => {
+        token?.quoteAsset !== "USDC" ? [] :
+          await client.symbolPriceTicker({ symbol: token.symbol })
+            .then(ticker => {
+              if (!Array.isArray(ticker)) {
+                prices[token.baseAsset] = parseFloat(ticker.price);
+              } else {
+                prices[token.baseAsset] = parseFloat(ticker?.[0].price || "0");
+              }
+            }).catch(() => {
+              console.log("Error while fetching binance price of", token.quoteAsset)
+              return []
+            });
+      });
+
+    // Wait for all the requests to complete
+    await Promise.all(priceRequests);
+
     return prices;
   }
 }
