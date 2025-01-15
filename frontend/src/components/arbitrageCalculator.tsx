@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 
 interface ArbitrageOpportunity {
   symbol: string;
@@ -25,10 +26,21 @@ const fetchArbitrageOpportunities = async () => {
 
 const ArbitrageCalculator = () => {
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["arbitrageOpportunities"],
-    queryFn: fetchArbitrageOpportunities,
-  });
+  const {
+    data,
+    error,
+    isIdle,
+    isPending,
+    mutate
+  } = useMutation({
+    mutationFn: fetchArbitrageOpportunities,
+  })
+
+  const isLoading = isIdle || isPending;
+
+  useEffect(() => {
+    mutate();
+  }, [])
 
   const opportunities = data?.data?.opportunities as ArbitrageOpportunity[];
 
@@ -50,6 +62,7 @@ const ArbitrageCalculator = () => {
             <CardHeader>
               <Button
                 disabled={isLoading}
+                onClick={() => mutate()}
               >
                 <RefreshCw /> Refresh
               </Button>
@@ -74,30 +87,32 @@ const ArbitrageCalculator = () => {
                     </div>
                   )
                     : (
-                      opportunities?.map((token, index) => (
-                        <Card key={token.symbol + index}
-                          className="px-3 py-2 !m-0"
-                        >
-                          <CardContent className="!p-5 m-0">
-                            <CardTitle className="pb-2">{token.symbol + "/USDC"}</CardTitle>
-                            <div className="flex w-full justify-between">
-                              <div className="flex gap-3">
-                                <div>
-                                  <CardDescription>{token.exchangeA}</CardDescription>
-                                  <div>{token.priceA}</div>
+                      !opportunities?.length ?
+                        <div className="p-5 text-xl">No opportunities available</div> :
+                        opportunities?.map((token, index) => (
+                          <Card key={token.symbol + index}
+                            className="px-3 py-2 !m-0"
+                          >
+                            <CardContent className="!p-5 m-0">
+                              <CardTitle className="pb-2">{token.symbol + "/USDC"}</CardTitle>
+                              <div className="flex w-full justify-between">
+                                <div className="flex gap-3">
+                                  <div>
+                                    <CardDescription>{token.exchangeA}</CardDescription>
+                                    <div>{token.priceA}</div>
+                                  </div>
+                                  <div>
+                                    <CardDescription>{token.exchangeB}</CardDescription>
+                                    <div>{token.priceB}</div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <CardDescription>{token.exchangeB}</CardDescription>
-                                  <div>{token.priceB}</div>
+                                <div className="font-semibold text-green-700">
+                                  {token.profitPercentage}% Profit
                                 </div>
                               </div>
-                              <div className="font-semibold text-green-700">
-                                {token.profitPercentage}% Profit
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
+                            </CardContent>
+                          </Card>
+                        ))
                     )
                 )
             }

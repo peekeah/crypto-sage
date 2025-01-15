@@ -55,8 +55,6 @@ const fetchPredictions = async (token: string): Promise<FetchPredictionsResponse
       })
       .then((res) => res.data as PriceData[]);
 
-    console.log("Historical Data:", historicalData);
-
     // Prepare actual prices and close prices
     const actualPrices = historicalData.map((item) => ({
       time: new Date(item.openTime).toLocaleTimeString(),
@@ -74,8 +72,6 @@ const fetchPredictions = async (token: string): Promise<FetchPredictionsResponse
     const predictions = await axios
       .post(`${BASE_URL}/api/predictor/predict`, predictPayload)
       .then((res) => res.data.predictions as number[]);
-
-    console.log("Predictions:", predictions);
 
     // Ensure predictions align with actual data length
     const trimmedPredictions = predictions.slice(0, actuals.length);
