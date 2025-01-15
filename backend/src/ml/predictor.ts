@@ -103,7 +103,7 @@ export class PricePredictor {
       const tensorData = tf.tensor3d([reshapedData], [1, 24, 5]);
 
       // Make prediction
-      const prediction = await this.model.predict(tensorData) as tf.Tensor;
+      const prediction = this.model.predict(tensorData) as tf.Tensor;
       const predictionData = await prediction.data();
 
       // Cleanup
