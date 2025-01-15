@@ -41,7 +41,7 @@ class ArbitrageAnalyzer {
         const profitPercentageBuyOnSolana = profitBuyOnSolana / solanaPriceWithSlippage * 100;
 
         // If there's a profitable opportunity, push it to the results
-        if (profitBuyOnBinance > 0) {
+        if (profitBuyOnBinance > 0 && profitPercentageBuyOnBinance <= 25) {
           opportunities.push({
             symbol,
             exchangeA: 'Binance',
@@ -53,7 +53,7 @@ class ArbitrageAnalyzer {
           });
         }
 
-        if (profitBuyOnSolana > 0) {
+        if (profitBuyOnSolana > 0 && profitPercentageBuyOnSolana <= 25) {
           opportunities.push({
             symbol,
             exchangeA: 'Raydium',
