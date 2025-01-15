@@ -37,60 +37,76 @@ interface PriceData {
 }
 
 const fetchPredictions = async (): Promise<FetchPredictionsResponse> => {
-  const URI = process.env.NEXT_PUBLIC_API_URI;
-  try {
-    // Fetch historical data (actual prices)
-    const dataResponse = await axios.get(`${URI}/api/predictor/data/BTCUSDT`);
-    const historicalData = dataResponse.data as PriceData[];
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URI;
+  const predictPayload = {
+    symbol: "BTCUSDT",
+    interval: "1h",
+    limit: 500,
+    lookback: 10,
+  };
 
-    // Prepare historical data
+  try {
+    // Fetch historical data
+    const historicalData = await axios
+      .get(`${BASE_URL}/api/predictor/data/${predictPayload.symbol}`, {
+        params: { interval: predictPayload.interval, limit: predictPayload.limit },
+      })
+      .then((res) => res.data as PriceData[]);
+
+    console.log("Historical Data:", historicalData);
+
+    // Prepare actual prices and close prices
     const actualPrices = historicalData.map((item) => ({
       time: new Date(item.openTime).toLocaleTimeString(),
-      actualPrice: parseFloat(item.close), // Close price is used here
+      actualPrice: parseFloat(item.close),
     }));
+    const closePrices = historicalData.map((item) => parseFloat(item.close));
 
-    // Fetch predictions for price movements (up or down)
-    const predictionResponse = await axios.post(`${URI}/api/predictor/predict`, {
-      symbol: "BTCUSDT",
-      interval: "1h",
-      limit: 500,
-      lookback: 10,
-    });
+    // Calculate actual movements (0 = down, 1 = up)
+    const actuals: number[] = [];
+    for (let i = predictPayload.lookback; i < closePrices.length; i++) {
+      actuals.push(closePrices[i] > closePrices[i - 1] ? 1 : 0);
+    }
 
-    const predictions = predictionResponse.data.predictions; // Expecting array of 0s and 1s
+    // Fetch predictions
+    const predictions = await axios
+      .post(`${BASE_URL}/api/predictor/predict`, predictPayload)
+      .then((res) => res.data.predictions as number[]);
 
-    // Prepare chart data by combining actual prices and predictions
-    const processedData = actualPrices.map((item, index) => ({
+    console.log("Predictions:", predictions);
+
+    // Ensure predictions align with actual data length
+    const trimmedPredictions = predictions.slice(0, actuals.length);
+
+    // Prepare chart data
+    const chartData = actualPrices.slice(predictPayload.lookback).map((item, index) => ({
       ...item,
-      predictedMovement: predictions[index] || 0, // 0 or 1 indicating down or up
-      predictedPrice: predictions[index] === 1
-        ? item.actualPrice * (1 + Math.random() * 0.02) // Simulate an up prediction
-        : item.actualPrice * (1 - Math.random() * 0.02), // Simulate a down prediction
+      predictedMovement: trimmedPredictions[index] || 0,
+      predictedPrice: trimmedPredictions[index] === 1
+        ? item.actualPrice * (1 + Math.random() * 0.02) // Simulate upward movement
+        : item.actualPrice * (1 - Math.random() * 0.02), // Simulate downward movement
     }));
 
-    // Optionally, send data for backtesting if required
-    const backtestResponse = await axios.post(`${URI}/api/predictor/backtest`, {
-      predictions: predictions,
-      actuals: actualPrices.map((el) => el.actualPrice),
-      closePrices: actualPrices.map((el) => el.actualPrice),
+    // Perform backtest
+    const backtestResponse = await axios.post(`${BASE_URL}/api/predictor/backtest`, {
+      predictions: trimmedPredictions,
+      actuals,
+      closePrices: closePrices.slice(predictPayload.lookback),
     });
 
-    console.log("Backtest Results:", backtestResponse.data);
-    const backtestData: BacktestData = backtestResponse.data;
+    const backtestData = backtestResponse.data as BacktestData;
 
-    // Update state with processed data
-    return {
-      chartData: processedData,
-      backtestData
-    };
+    // Return chart data and backtest results
+    return { chartData, backtestData };
   } catch (error) {
-    console.error("Error fetching data or predictions:", error);
+    console.error("Error fetching predictions:", error);
     return {
       chartData: [],
-      backtestData: { accuracy: 0, profitLoss: 0 }
-    }
+      backtestData: { accuracy: 0, profitLoss: 0 },
+    };
   }
 };
+
 
 const MarketPredictor = () => {
 
@@ -114,7 +130,7 @@ const MarketPredictor = () => {
           <div>
             <div className="text-xl">Test result</div>
             <div className="flex gap-5">
-              <div>Accuracy: {backtestData.accuracy}</div>
+              <div>Accuracy: {backtestData.accuracy?.toFixed(2)}%</div>
               <div>Profit/Loss: {backtestData.profitLoss.toFixed(2)}</div>
             </div>
           </div>

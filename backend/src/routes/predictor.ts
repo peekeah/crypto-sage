@@ -7,6 +7,7 @@ import Preprocessor from "../ml/preprocessor";
 
 const router = Router();
 
+const binance = new Binance();
 const MlModel = new Model();
 const preprocessor = new Preprocessor();
 
@@ -15,7 +16,6 @@ router.get('/data/:symbol', async (req, res) => {
   const { symbol } = req.params;
   const { interval = '1h', limit = 500 } = req.query;
   try {
-    const binance = new Binance();
     const data = await binance.fetchHistoricalData(symbol, interval as Interval, parseInt(limit as string));
     res.json(data);
   } catch (error) {
@@ -29,7 +29,6 @@ router.post('/predict', async (req, res) => {
 
   try {
     // Fetch historical data and preprocess it
-    const binance = new Binance();
     const data = await binance.fetchHistoricalData(symbol, interval, limit);
     const { X, y } = preprocessor.prepareDataset(data, lookback);
 

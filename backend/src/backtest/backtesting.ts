@@ -11,19 +11,27 @@ export const backtest = (
   let correct = 0;
   let profitLoss = 0;
 
-  for (let i = 0; i < predictions.length; i++) {
-    if (predictions[i] === actuals[i]) {
+  // Ensure predictions align with actuals and closePrices
+  const trimmedPredictions = predictions.slice(0, closePrices.length - 1);
+
+  for (let i = 0; i < trimmedPredictions.length; i++) {
+    // Calculate accuracy
+    if (trimmedPredictions[i] === actuals[i]) {
       correct++;
     }
-    if (predictions[i] === 1) {
+
+    // Calculate profit/loss based on predictions
+    if (trimmedPredictions[i] === 1) {
+      // Predicted up
       profitLoss += closePrices[i + 1] - closePrices[i];
     } else {
+      // Predicted down
       profitLoss -= closePrices[i + 1] - closePrices[i];
     }
   }
 
   return {
-    accuracy: (correct / predictions.length) * 100,
+    accuracy: (correct / trimmedPredictions.length) * 100,
     profitLoss,
   };
 };
