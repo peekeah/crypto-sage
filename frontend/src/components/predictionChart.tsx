@@ -150,6 +150,7 @@ const MarketPredictor = () => {
             </div>
             <div>
               <Select
+                disabled={isLoading}
                 value={selectedToken}
                 onValueChange={(value) => {
                   setSelectedToken(value);
